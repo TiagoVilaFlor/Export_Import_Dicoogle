@@ -1,11 +1,6 @@
 package controllers;
 
-import akka.actor.IO;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import play.Logger;
-import play.api.mvc.Rendering;
-import play.libs.Json;
+
 import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.*;
@@ -15,9 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Map;
 
-//import play.db.DB;
+//imported play.db.DB;
 
-//import static play.data.Form.form;
+//imported static play.data.Form.form;
 
 /**
  * Created by tiago on 06-11-2014.
@@ -28,5 +23,12 @@ public class App extends Controller {
         return ok(index.render());
     }
 
+    public static Result imported(){
+        return ok(imported.render());
+    }
+
+    public static Result upload(){
+        return ok(upload.render());
+    }
 
 }
