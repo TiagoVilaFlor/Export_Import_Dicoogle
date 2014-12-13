@@ -16,6 +16,12 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+
+        <style>
+            body{
+                overflow-x: hidden;
+            }
+        </style>
     </head>
     <body>
         <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -31,6 +37,8 @@
                 </div>
             </div>
         </nav>
+
+
 
         <div class="row" style="margin-top: 3%">
             <div class="col-lg-2"></div>
@@ -62,7 +70,7 @@
                                     <input type="text" class="form-control" id="folder">
                                 </div>
                                 <div class="row" style="margin-top: 10%; margin-bottom: 5%; text-align: center;">
-                                    <button class="btn btn-success" id="exportPC">Export to PC</button>
+                                    <button class="btn btn-success btn-lg" id="exportPC">Export to PC</button>
                                 </div>
                             </div>
                             <div class="col-lg-2"></div>
@@ -74,23 +82,37 @@
                                 </div>
                                 <div class="input-group labels">
                                     <span class="input-group-addon">AET</span>
-                                    <input type="text" class="form-control" id="aetC" placeholder="C:\temp">
+                                    <input type="text" class="form-control" id="aetC" placeholder="DCMRCV">
                                 </div>
                                 <div class="input-group labels">
                                     <span class="input-group-addon">Port</span>
-                                    <input type="text" class="form-control" id="portC" placeholder="DicomDir">
+                                    <input type="text" class="form-control" id="portC" placeholder="11112">
                                 </div>
                                 <div class="input-group labels">
                                     <span class="input-group-addon">Host</span>
-                                    <input type="text" class="form-control" id="hostC" placeholder="DicomDir">
+                                    <input type="text" class="form-control" id="hostC" placeholder="localhost">
                                 </div>
                                 <div class="row" style="margin-top: 10%; margin-bottom: 5%; text-align: center;">
-                                    <button class="btn btn-success" id="exportC">Export to Pacs</button>
+                                    <button class="btn btn-success btn-lg" id="exportC">Export to Pacs</button>
                                 </div>
                             </div>
                         </div>
                         <div class="tab-pane" id="imported" style="margin-top: 5%;">
-                            <div class="container" id="importFile" style="width: 80%; height: 200px; border: 1px solid #ddd; border-radius: 20px">
+                            <div class="container" id="importFile" style="width: 80%; height: 300px; border: 1px solid #ddd; border-radius: 20px">
+
+                                <div class="example">
+                                    <div id="drop_zone">Solte arquivos aqui</div>
+                                    <output id="file_list2" style="height: 10px"></output>
+                                </div>
+
+                                <div class="row" style="margin-top: 5%;">
+                                    <div class="col-lg-9"></div>
+                                    <div class="col-lg-3">
+                                        <button class="btn btn-lg btn-danger" id="btClear">Clear</button>
+                                        <button class="btn btn-lg btn-success" style="margin-left: 8%" id="btImport">Import</button>
+                                    </div>
+                                </div>
+
 
                             </div>
                         </div>
@@ -117,6 +139,65 @@
         <script>
             $( document ).ready(function() {
 
+                var UID;
+
+                var get = function(id) { return document.getElementById(id); }
+
+
+                var example2 = example2 || {};
+                example2.onDragOver = function(evt) {
+                evt.stopPropagation();
+                evt.preventDefault();
+                evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+                }
+
+                var output = [];
+
+                example2.onDragFileDrop = function(evt) {
+                evt.stopPropagation();
+                evt.preventDefault();
+
+                var files = evt.dataTransfer.files;
+
+                for (var i = 0, f; f = files[i]; i++) {
+                    output.push('<li id="clean"><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+                    f.size, ' bytes, last modified: ',
+                    f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+                    '</li>');
+                    console.log("Filename: "+ f.name);
+                    UID = f.name;
+                }
+                get('file_list2').innerHTML = '<ul>' + output.join('') + '</ul>';
+                }
+
+
+                // Setup the dnd listeners.
+                get('drop_zone').addEventListener('dragover', example2.onDragOver, false);
+                get('drop_zone').addEventListener('drop', example2.onDragFileDrop, false);
+
+                $("#btClear" ).click(function(){
+                    output = [];
+                    $("#file_list2").empty();
+                    UID = "";
+                });
+
+                $("#btImport" ).click(function(){
+                    $.ajax({
+                        url: 'localhost:8080/RSI/importToDicoogle/studies?',
+                        type: 'GET',
+                        async: false,
+                        processData: true,
+                        data: 'StudyInstanceUID='+UID,
+                        crossDomain : true,
+                        success: function(resp) {
+                        console.log(resp);
+                        },
+                        error: function(resp){
+                        console.log("ERROR: An error has occurred while trying to access webservice!");
+                        }
+                    });
+                });
+
                 $("#folder" ).animate({opacity: 0.0});
                 $("#exportPC" ).click(function(){
 
@@ -125,11 +206,11 @@
                     //console.log($("#folderName").val());
 
                     $.ajax({
-                        url: 'http://localhost:8080/sample/hello?',
+                        url: 'localhost:8080/RSI/exportToDcmDir?',
                         type: 'GET',
                         async: false,
                         processData: true,
-                        data: 'StudyInstanceUID='+$("#instanceIDC").val()+"&FileDestination="+$("#destination").val()+'&DicomDirName='+$("#folderName").val(),
+                        data: 'StudyInstanceUID='+$("#instanceID").val()+"&FileDestination="+$("#destination").val()+'&DcmDirName='+$("#folderName").val(),
                         crossDomain : true,
                         success: function(resp) {
                             console.log(resp);
@@ -147,11 +228,11 @@
                     //console.log($("#folderName").val());
 
                     $.ajax({
-                        url: 'http://localhost:8080/sample/hello?',
+                        url: 'localhost:8080/RSI/exportToAnotherPACS?',
                         type: 'GET',
                         async: false,
                         processData: true,
-                        data: 'StudyInstanceUID='+$("#instanceID").val()+'&AET='+$("#aetC").val()+'&Port='+$("#portC").val()+'&Host='+$("#hostC").val(),
+                        data: 'StudyInstanceUID='+$("#instanceIDC").val()+'&AET='+$("#aetC").val()+'&Port='+$("#portC").val()+'&Host='+$("#hostC").val(),
                         crossDomain : true,
                         success: function(resp) {
                             console.log(resp);
